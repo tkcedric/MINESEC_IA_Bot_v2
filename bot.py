@@ -5,6 +5,8 @@
 # =======================================================================
 # SECTION 1 : IMPORTS (VERSION NETTOYÉE)
 # =======================================================================
+from flask import Flask
+import threading
 import logging
 import os
 import re
@@ -450,6 +452,17 @@ header-includes:
         if 'document_source' in locals():
             logger.error(f"Source Markdown problématique (extrait) : {document_source[:1000]}")
         return False
+    
+# --- Fonction pour le mini-serveur web (Health Check pour Render) ---
+def run_flask_app():
+    app = Flask(__name__)
+    @app.route('/health')
+    def health_check():
+        return "OK", 200 # Répond "OK" à Render
+    
+    # On utilise le port que Render nous donne
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
 # =======================================================================
 # FIN DE LA SECTION 4 : FONCTIONS UTILITAIRES
 # =======================================================================
@@ -805,6 +818,14 @@ def cancel(update: Update, context: CallbackContext) -> int:
 # SECTION 6 : Lancement du Bot (CONFIGURATION FINALE DES ÉTATS)
 # =======================================================================
 def main():
+      """Fonction principale qui configure et lance le bot ET le serveur web."""
+    # --- Lancement du serveur Flask dans un thread séparé ---
+    flask_thread = threading.Thread(target=run_flask_app)
+    flask_thread.daemon = True
+    flask_thread.start()
+    logger.info("Serveur Flask pour le Health Check démarré.")
+
+    # --- Configuration et lancement du bot Telegram (ne change pas) ---
     updater = Updater(TELEGRAM_TOKEN, use_context=True)
     dp = updater.dispatcher
 
