@@ -1,0 +1,16 @@
+services:
+  - type: worker  # On spécifie que c'est un processus d'arrière-plan
+    name: minesec-ia-bot
+    env: python
+    plan: free  # On utilise le plan gratuit
+    buildCommand: |
+      pip install -r requirements.txt
+      apt-get update && apt-get install -y pandoc texlive-xetex --no-install-recommends
+    startCommand: python bot.py
+    envVars:
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.5 # Spécifie une version récente de Python
