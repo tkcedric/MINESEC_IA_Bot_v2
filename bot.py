@@ -361,60 +361,66 @@ def call_openai_api(prompt):
 # Voici la SEULE et UNIQUE version de la fonction de création de PDF.
 # Elle est placée correctement dans la section des fonctions utilitaires.
 
-# CREATION DU PDF create_pdf_with_pandoc par ceci :
-
 def create_pdf_with_pandoc(text, filename="document.pdf", lang_contenu_code='fr'):
     """
     Crée un PDF de haute qualité en utilisant Pandoc.
-    Elle nettoie agressivement le texte et construit un tableau Markdown parfait.
+    Elle génère le texte principal ET un tableau Markdown pour le jeu bilingue.
     """
     try:
-        logger.info(f"Création du PDF (v7 - Nettoyage Agressif) : {filename}")
+        logger.info(f"Création du PDF (v6 - Tableau Markdown) : {filename}")
 
         # 1. On sépare le texte principal et les données du jeu bilingue
         if "<bilingual_data>" in text:
-            # On s'assure de ne prendre que le texte AVANT la balise
-            main_markdown_raw = text.split("<bilingual_data>")[0].strip()
-            bilingual_data_raw = text.split("<bilingual_data>")[1].split("</bilingual_data>")[0]
+            main_markdown_raw = text.split("<bilingual_data>")[0]
+            bilingual_data = text.split("<bilingual_data>")[1].split("</bilingual_data>")[0]
         else:
             main_markdown_raw = text
-            bilingual_data_raw = ""
+            bilingual_data = ""
 
-        # 2. Nettoyage du texte principal
+        # 2. On nettoie les commentaires et on standardise le texte principal
+        # Cette étape est importante pour la consistance.
         main_markdown_final = re.sub(r'<!--.*?-->', '', main_markdown_raw, flags=re.DOTALL).strip()
         
-        # 3. Construction du tableau Markdown (si des données existent)
-        markdown_table = ""
-        if bilingual_data_raw:
-            bilingual_content = re.sub(r'<!--.*?-->', '', bilingual_data_raw, flags=re.DOTALL).strip()
+        # 3. On construit le tableau bilingue en format Markdown s'il existe
+        markdown_table = "" # On initialise une chaîne vide pour le tableau
+        if bilingual_data:
+            # On nettoie le contenu du tableau
+            bilingual_content = re.sub(r'<!--.*?-->', '', bilingual_data, flags=re.DOTALL).strip()
             lines = [line.strip() for line in bilingual_content.split('\n') if line.strip() and ';' in line]
             
             if lines:
-                # On récupère le titre du tableau dans la bonne langue
+                # On récupère le titre du tableau dans la bonne langue (langue du contenu)
                 table_title = TITLES.get(lang_contenu_code, TITLES['fr'])['JEU_BILINGUE']
+                
+                # On crée la section complète du tableau en Markdown
                 markdown_table += f"\n\n**{table_title}**\n\n"
                 
-                # Définition des en-têtes
+                # On définit les en-têtes en fonction de la langue du contenu
                 headers = ['N°', 'Français', 'English'] if lang_contenu_code == 'fr' else ['N°', 'English', 'Français']
-                markdown_table += f"| {headers[0]} | {headers[1]} | {headers[2]} |\n"
-                markdown_table += "|:---:|:---|:---|\n"
                 
-                # Remplissage des lignes
+                # Construction du tableau Markdown
+                markdown_table += f"| {headers[0]} | {headers[1]} | {headers[2]} |\n"
+                markdown_table += "|:---:|:---|:---|\n" # Ligne pour l'alignement des colonnes
+                
                 for i, line in enumerate(lines):
                     parts = [p.strip() for p in line.split(';')]
                     if len(parts) == 2:
                         markdown_table += f"| {i+1} | {parts[0]} | {parts[1]} |\n"
 
-        # 4. Assemblage du document Markdown final
+        # 4. On assemble le document Markdown final : texte principal + tableau
         final_markdown_doc = main_markdown_final + markdown_table
 
-        # 5. Création de l'en-tête YAML pour Pandoc
+        # 5. On crée l'en-tête YAML pour Pandoc pour un rendu professionnel
         selected_pdf_titles = TITLES.get(lang_contenu_code, TITLES['fr'])
+        
+        # Configuration de la locale pour la date
         try:
+            # Pour le chinois, la locale peut être complexe. On utilise 'en_US' comme fallback sûr.
             locale_str = f'{lang_contenu_code}_{lang_contenu_code.upper()}.UTF-8' if lang_contenu_code != 'zh' else 'en_US.UTF-8'
             locale.setlocale(locale.LC_TIME, locale_str)
         except locale.Error:
-            locale.setlocale(locale.LC_TIME, '')
+            locale.setlocale(locale.LC_TIME, '') # Fallback à la locale système
+
         formatted_date = datetime.date.today().strftime('%d %B %Y')
 
         yaml_header = f"""
@@ -422,30 +428,26 @@ def create_pdf_with_pandoc(text, filename="document.pdf", lang_contenu_code='fr'
 title: "{selected_pdf_titles.get('PDF_TITLE', 'Lesson Plan')}"
 author: "{selected_pdf_titles.get('PDF_AUTHOR', 'MINESEC IA Pedagogical Assistant')}"
 date: "{formatted_date}"
-lang: "{lang_contenu_code}"
+fontsize: 12pt
 geometry: "margin=1in"
-mainfont: "Liberation Serif"
-header-includes:
-- \\usepackage{{amsmath}}
-- \\usepackage{{amssymb}}
-- \\usepackage{{babel}}
 ---
 """
-        # 6. Conversion finale avec Pandoc
+
+        # 6. On assemble le tout et on convertit avec le moteur XeLaTeX
         document_source = yaml_header + final_markdown_doc
         pypandoc.convert_text(document_source, 'pdf', format='markdown',
                               outputfile=filename,
-                              extra_args=['--pdf-engine=xelatex'])
+                              extra_args=['--pdf-engine=xelatex']) # XeLaTeX est excellent pour les langues
         
-        logger.info(f"PDF '{filename}' créé avec succès.")
+        logger.info(f"PDF '{filename}' créé avec succès en utilisant Pandoc et XeLaTeX.")
         return True
 
     except Exception as e:
         logger.error(f"Erreur DÉFINITIVE lors de la création du PDF avec Pandoc: {e}")
+        # Log supplémentaire pour le débogage si une erreur se produit
         if 'document_source' in locals():
             logger.error(f"Source Markdown problématique (extrait) : {document_source[:1000]}")
         return False
-    return ConversationHandler.END
     
 # --- Fonction pour le mini-serveur web (Health Check pour Render) ---
 def run_flask_app():
