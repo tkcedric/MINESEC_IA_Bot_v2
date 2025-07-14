@@ -423,18 +423,15 @@ def create_pdf_with_pandoc(text, filename="document.pdf", lang_contenu_code='fr'
 
         formatted_date = datetime.date.today().strftime('%d %B %Y')
 
+
         yaml_header = f"""
 ---
 title: "{selected_pdf_titles.get('PDF_TITLE', 'Lesson Plan')}"
-author: "{selected_pdf_titles.get('PDF_AUTHOR', 'MINESEC IA Pedagogical Assistant')}"
+author: "{selected_pdf_titles.get('PDF_AUTHOR', 'MINESEC IA')}"
 date: "{formatted_date}"
-lang: "{lang_contenu_code}"
-geometry: "margin=1in"
-mainfont: "Liberation Serif" # Une police qui supporte bien les caractères spéciaux
+documentclass: article
 fontsize: 11pt
-header-includes:
-- \\usepackage{{amsmath}}
-- \\usepackage{{amssymb}}
+geometry: "margin=1in"
 ---
 """
         # 6. On assemble le tout et on convertit avec le moteur XeLaTeX
@@ -460,9 +457,7 @@ def run_flask_app():
     def health_check():
         return "OK", 200 # Répond "OK" à Render
     
-    # On utilise le port que Render nous donne, avec 5000 comme valeur par défaut
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+   
 # =======================================================================
 # FIN DE LA SECTION 4 : FONCTIONS UTILITAIRES
 # =======================================================================
@@ -734,12 +729,6 @@ def cancel(update: Update, context: CallbackContext) -> int:
 # SECTION 6 : Lancement du Bot (CONFIGURATION FINALE DES ÉTATS)
 # =======================================================================
 def main():
-       # --- Lancement du serveur Flask dans un thread séparé ---
-    flask_thread = threading.Thread(target=run_flask_app)
-    flask_thread.daemon = True # Permet au programme principal de se fermer même si ce thread tourne
-    flask_thread.start()
-    logger.info("Serveur Flask pour le Health Check démarré.")
-
     # --- Configuration et lancement du bot Telegram (votre code existant) ---
     updater = Updater(TELEGRAM_TOKEN, use_context=True)
     dp = updater.dispatcher
