@@ -7,10 +7,10 @@ WORKDIR /app
 # 3. Installation des dépendances système complètes pour LaTeX
 RUN apt-get update && apt-get install -y \
     pandoc \
-    texlive-full \  # Au lieu de texlive-xetex seulement
+    texlive-full \
     texlive-fonts-extra \
     texlive-latex-extra \
-    lmodern \  # Spécifiquement pour le paquet manquant
+    lmodern \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
