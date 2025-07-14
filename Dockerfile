@@ -5,12 +5,17 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # 3. Installation des dépendances système complètes pour LaTeX
+# Installer les dépendances système (LaTeX + polices)
 RUN apt-get update && apt-get install -y \
     pandoc \
     texlive-full \
-    texlive-fonts-extra \
+    texlive-fonts-recommended \
+    texlive-latex-recommended \
     texlive-latex-extra \
+    texlive-xetex \
     lmodern \
+    fonts-liberation \
+    fonts-freefont-ttf \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
