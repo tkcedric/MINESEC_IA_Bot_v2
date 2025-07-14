@@ -1,22 +1,23 @@
-# 1. On part d'une image officielle qui contient déjà Pandoc et un environnement LaTeX COMPLET.
+# 1. On part d'une image officielle qui contient déjà Pandoc et LaTeX
 FROM pandoc/latex:latest
 
-# 2. On installe Python et pip dans cet environnement.
-# apk est le gestionnaire de paquets de Alpine Linux, l'OS de cette image.
-RUN apk add --no-cache python3 py3-pip
+# 2. On installe Python et le module pour les environnements virtuels
+RUN apk add --no-cache python3 py3-pip py3-venv
 
-# 3. On met à jour pip et on crée un lien symbolique pour que 'python' pointe vers 'python3'
-RUN pip install --upgrade pip
-RUN ln -s /usr/bin/python3 /usr/bin/python
+# 3. On crée un environnement virtuel Python à l'intérieur de notre conteneur
+RUN python3 -m venv /opt/venv
 
-# 4. On définit le répertoire de travail
-WORKDIR /app
+# 4. On active cet environnement virtuel pour toutes les commandes suivantes
+ENV PATH="/opt/venv/bin:$PATH"
 
-# 5. On copie et on installe nos dépendances Python
+# 5. Maintenant qu'on est DANS l'environnement virtuel, on peut utiliser pip sans risque
+# On met à jour pip et on installe nos dépendances
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# 6. On copie tout le reste de notre code
+# 6. On définit le répertoire de travail et on copie notre code
+WORKDIR /app
 COPY . .
 
 # 7. On expose le port pour le health check de Render
