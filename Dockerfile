@@ -6,12 +6,16 @@ WORKDIR /app
 
 # 3. On met à jour la liste des paquets et on installe nos dépendances système
 # C'est l'équivalent de l'Aptfile ou du build.sh
+# ...
+# 3. Installation COMPLÈTE des dépendances système pour assurer la compatibilité
 RUN apt-get update && apt-get install -y \
     pandoc \
     texlive-xetex \
     texlive-fonts-recommended \
+    texlive-latex-extra \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
+# ...
 
 # 4. On copie le fichier des dépendances Python et on les installe
 COPY requirements.txt .

@@ -428,11 +428,15 @@ def create_pdf_with_pandoc(text, filename="document.pdf", lang_contenu_code='fr'
 title: "{selected_pdf_titles.get('PDF_TITLE', 'Lesson Plan')}"
 author: "{selected_pdf_titles.get('PDF_AUTHOR', 'MINESEC IA Pedagogical Assistant')}"
 date: "{formatted_date}"
-fontsize: 12pt
+lang: "{lang_contenu_code}"
 geometry: "margin=1in"
+mainfont: "Liberation Serif" # Une police qui supporte bien les caractères spéciaux
+fontsize: 11pt
+header-includes:
+- \\usepackage{{amsmath}}
+- \\usepackage{{amssymb}}
 ---
 """
-
         # 6. On assemble le tout et on convertit avec le moteur XeLaTeX
         document_source = yaml_header + final_markdown_doc
         pypandoc.convert_text(document_source, 'pdf', format='markdown',
