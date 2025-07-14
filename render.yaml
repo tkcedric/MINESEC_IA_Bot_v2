@@ -1,9 +1,9 @@
 services:
-  - type: web  # <<< ON CHANGE ICI : de "worker" à "web"
+  - type: web
     name: minesec-ia-bot
     env: python
     plan: free
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: "./build.sh" # <<< ON CHANGE ICI
     startCommand: "python bot.py" # La commande de démarrage ne change pas
     healthCheckPath: /health # On dit à Render de vérifier cette URL
     envVars:
