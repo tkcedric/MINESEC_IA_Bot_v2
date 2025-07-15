@@ -431,7 +431,7 @@ date: "{formatted_date}"
 documentclass: article
 fontsize: 11pt
 geometry: "margin=1in"
-mainfont: "Times New Roman"  # Police plus universelle
+mainfont: "Liberation Serif"  # Police incluse dans fonts-liberation
 ---
 """
         # 6. On assemble le tout et on convertit avec le moteur XeLaTeX
